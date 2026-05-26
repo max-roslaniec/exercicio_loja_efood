@@ -1,4 +1,5 @@
 import React from 'react'
+import Header from '../../components/Header'
 import RestaurantList from '../../components/RestaurantList'
 
 const mockRestaurants = [
@@ -25,6 +26,7 @@ const mockRestaurants = [
 const Home = () => {
   return (
     <>
+      <Header />
       <RestaurantList restaurants={mockRestaurants} />
     </>
   )

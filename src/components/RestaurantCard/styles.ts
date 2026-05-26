@@ -30,8 +30,8 @@ export const Tags = styled.div`
 
 export const Tag = styled.span`
   background-color: ${colors.primary};
-  color: ${colors.white};
-  padding: 4px 6px;
+  color: ${colors.footer};
+  padding: 6px 10px;
   font-size: 12px;
   font-weight: bold;
 `
@@ -68,7 +68,7 @@ export const Descricao = styled.p`
 
 export const Botao = styled(Link)`
   background-color: ${colors.primary};
-  color: ${colors.white};
+  color: ${colors.footer};
   padding: 4px 6px;
   text-decoration: none;
   font-weight: bold;
