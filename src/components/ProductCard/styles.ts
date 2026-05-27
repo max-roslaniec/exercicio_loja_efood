@@ -5,14 +5,14 @@ export const Card = styled.div`
   background-color: ${colors.primary};
   color: ${colors.footer};
   padding: 8px;
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
 `
 
 export const Img = styled.img`
   width: 100%;
   height: 167px;
   object-fit: cover;
-  border-radius: 8px;
   margin-bottom: 8px;
 `
 
@@ -26,6 +26,7 @@ export const Descricao = styled.p`
   font-size: 14px;
   line-height: 22px;
   margin-bottom: 8px;
+  flex-grow: 1;
 `
 
 export const Botao = styled.button`
@@ -37,5 +38,5 @@ export const Botao = styled.button`
   font-size: 14px;
   font-weight: 900;
   cursor: pointer;
-  border-radius: 4px;
+  margin-top: auto;
 `
