@@ -1,28 +1,35 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Container, List } from './styles'
 import ProductCard from '../ProductCard'
-
-export type Product = {
-  foto: string
-  preco: number
-  id: number
-  nome: string
-  descricao: string
-  porcao: string
-}
+import Modal from '../Modal'
+import { Produto } from '../../types'
 
 type Props = {
-  products: Product[]
+  products: Produto[]
 }
 
-const ProductList = ({ products }: Props) => (
-  <Container className="container">
-    <List>
-      {products.map((product) => (
-        <ProductCard key={product.id} {...product} />
-      ))}
-    </List>
-  </Container>
-)
+const ProductList = ({ products }: Props) => {
+  const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null)
+
+  return (
+    <Container className="container">
+      <List>
+        {products.map((product) => (
+          <ProductCard
+            key={product.id}
+            {...product}
+            onClick={() => setProdutoSelecionado(product)}
+          />
+        ))}
+      </List>
+      {produtoSelecionado && (
+        <Modal
+          produto={produtoSelecionado}
+          onClose={() => setProdutoSelecionado(null)}
+        />
+      )}
+    </Container>
+  )
+}
 
 export default ProductList

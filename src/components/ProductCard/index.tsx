@@ -8,9 +8,10 @@ type Props = {
   nome: string
   descricao: string
   porcao: string
+  onClick: () => void
 }
 
-const ProductCard = ({ foto, preco, id, nome, descricao, porcao }: Props) => {
+const ProductCard = ({ foto, preco, id, nome, descricao, porcao, onClick }: Props) => {
   const getDescricaoCurta = (text: string) => {
     if (text.length > 130) {
       return text.slice(0, 127) + '...'
@@ -23,7 +24,7 @@ const ProductCard = ({ foto, preco, id, nome, descricao, porcao }: Props) => {
       <Img src={foto} alt={nome} />
       <Titulo>{nome}</Titulo>
       <Descricao>{getDescricaoCurta(descricao)}</Descricao>
-      <Botao>Adicionar ao carrinho</Botao>
+      <Botao onClick={onClick}>Mais detalhes</Botao>
     </Card>
   )
 }
