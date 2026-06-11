@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { Produto } from '../../types'
+import { useCart } from '../../contexts/CartContext'
 import {
   Overlay,
   ModalContainer,
@@ -21,6 +22,8 @@ const formatarPreco = (preco: number) =>
   preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 const Modal = ({ produto, onClose }: Props) => {
+  const { addItem } = useCart()
+
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => {
@@ -34,6 +37,11 @@ const Modal = ({ produto, onClose }: Props) => {
     }
   }
 
+  const handleAddToCart = () => {
+    addItem(produto)
+    onClose()
+  }
+
   return (
     <Overlay onClick={handleOverlayClick}>
       <ModalContainer>
@@ -45,7 +53,7 @@ const Modal = ({ produto, onClose }: Props) => {
           <ModalTitulo>{produto.nome}</ModalTitulo>
           <ModalDescricao>{produto.descricao}</ModalDescricao>
           <ModalPorcao>Serve: {produto.porcao}</ModalPorcao>
-          <BotaoAdicionar>
+          <BotaoAdicionar onClick={handleAddToCart}>
             Adicionar ao carrinho - {formatarPreco(produto.preco)}
           </BotaoAdicionar>
         </ModalConteudo>

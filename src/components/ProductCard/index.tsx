@@ -24,7 +24,7 @@ const ProductCard = ({ foto, preco, id, nome, descricao, porcao, onClick }: Prop
       <Img src={foto} alt={nome} />
       <Titulo>{nome}</Titulo>
       <Descricao>{getDescricaoCurta(descricao)}</Descricao>
-      <Botao onClick={onClick}>Adicionar ao carrinho</Botao>
+      <Botao onClick={onClick}>Mais detalhes</Botao>
     </Card>
   )
 }
