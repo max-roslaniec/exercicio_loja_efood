@@ -113,11 +113,11 @@ export const FormLabel = styled.label`
   margin-bottom: 8px;
 `
 
-export const FormInput = styled.input`
+export const FormInput = styled.input<{ $hasError?: boolean }>`
   width: 100%;
   padding: 8px;
   background-color: ${colors.footer};
-  border: none;
+  border: 2px solid ${(props) => (props.$hasError ? '#ff6b6b' : 'transparent')};
   color: ${colors.primary};
   font-size: 14px;
   font-weight: 700;
@@ -126,6 +126,13 @@ export const FormInput = styled.input`
   &::placeholder {
     color: rgba(230, 103, 103, 0.5);
   }
+`
+
+export const ErrorText = styled.span`
+  display: block;
+  font-size: 12px;
+  color: #ff6b6b;
+  margin-top: 4px;
 `
 
 export const FormRow = styled.div`

@@ -18,7 +18,8 @@ import {
   FormRow,
   ConfirmationTitle,
   ConfirmationText,
-  EmptyCartText
+  EmptyCartText,
+  ErrorText
 } from './styles'
 import { colors } from '../../styles'
 
@@ -26,6 +27,29 @@ type CheckoutStep = 'cart' | 'delivery' | 'payment' | 'confirmation'
 
 const formatarPreco = (preco: number) =>
   preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+// --- Input masks ---
+const maskCEP = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 8)
+  if (digits.length > 5) return `${digits.slice(0, 5)}-${digits.slice(5)}`
+  return digits
+}
+
+const maskCardNumber = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 16)
+  return digits.replace(/(\d{4})(?=\d)/g, '$1 ')
+}
+
+const maskCVV = (value: string) => value.replace(/\D/g, '').slice(0, 3)
+
+const maskMonth = (value: string) => value.replace(/\D/g, '').slice(0, 2)
+
+const maskYear = (value: string) => value.replace(/\D/g, '').slice(0, 4)
+
+const maskOnlyNumbers = (value: string) => value.replace(/\D/g, '')
+
+// --- Validation helpers ---
+type FieldErrors = Record<string, string>
 
 const Cart = () => {
   const { items, removeItem, clearCart, isOpen, closeCart, totalPrice } = useCart()
@@ -47,6 +71,10 @@ const Cart = () => {
   const [cvv, setCvv] = useState('')
   const [expiresMonth, setExpiresMonth] = useState('')
   const [expiresYear, setExpiresYear] = useState('')
+
+  // Validation errors
+  const [deliveryErrors, setDeliveryErrors] = useState<FieldErrors>({})
+  const [paymentErrors, setPaymentErrors] = useState<FieldErrors>({})
 
   const handleClose = () => {
     closeCart()
@@ -70,9 +98,48 @@ const Cart = () => {
     setExpiresMonth('')
     setExpiresYear('')
     setOrderId('')
+    setDeliveryErrors({})
+    setPaymentErrors({})
+  }
+
+  const validateDelivery = (): boolean => {
+    const errors: FieldErrors = {}
+    if (!receiver.trim()) errors.receiver = 'Preencha o nome do receptor'
+    if (!address.trim()) errors.address = 'Preencha o endereço'
+    if (!city.trim()) errors.city = 'Preencha a cidade'
+    const cepDigits = zipCode.replace(/\D/g, '')
+    if (!cepDigits) errors.zipCode = 'Preencha o CEP'
+    else if (cepDigits.length !== 8) errors.zipCode = 'CEP deve ter 8 dígitos'
+    if (!number.trim()) errors.number = 'Preencha o número'
+    else if (!/^\d+$/.test(number.trim())) errors.number = 'Número inválido'
+    setDeliveryErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const validatePayment = (): boolean => {
+    const errors: FieldErrors = {}
+    if (!cardName.trim()) errors.cardName = 'Preencha o nome no cartão'
+    const cardDigits = cardNumber.replace(/\D/g, '')
+    if (!cardDigits) errors.cardNumber = 'Preencha o número do cartão'
+    else if (cardDigits.length !== 16) errors.cardNumber = 'Número do cartão deve ter 16 dígitos'
+    if (!cvv) errors.cvv = 'Preencha o CVV'
+    else if (cvv.length !== 3) errors.cvv = 'CVV deve ter 3 dígitos'
+    const month = parseInt(expiresMonth)
+    if (!expiresMonth) errors.expiresMonth = 'Preencha o mês'
+    else if (isNaN(month) || month < 1 || month > 12) errors.expiresMonth = 'Mês inválido (01-12)'
+    const year = parseInt(expiresYear)
+    if (!expiresYear) errors.expiresYear = 'Preencha o ano'
+    else if (isNaN(year) || expiresYear.length !== 4) errors.expiresYear = 'Ano deve ter 4 dígitos'
+    setPaymentErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleGoToPayment = () => {
+    if (validateDelivery()) setStep('payment')
   }
 
   const handleCheckout = async () => {
+    if (!validatePayment()) return
     setIsSubmitting(true)
     try {
       const body = {
@@ -85,7 +152,7 @@ const Cart = () => {
           address: {
             description: address,
             city,
-            zipCode,
+            zipCode: zipCode.replace(/\D/g, ''),
             number: parseInt(number) || 0,
             complement
           }
@@ -93,7 +160,7 @@ const Cart = () => {
         payment: {
           card: {
             name: cardName,
-            number: cardNumber,
+            number: cardNumber.replace(/\s/g, ''),
             code: parseInt(cvv) || 0,
             expires: {
               month: parseInt(expiresMonth) || 0,
@@ -196,7 +263,9 @@ const Cart = () => {
           type="text"
           value={receiver}
           onChange={(e) => setReceiver(e.target.value)}
+          $hasError={!!deliveryErrors.receiver}
         />
+        {deliveryErrors.receiver && <ErrorText>{deliveryErrors.receiver}</ErrorText>}
       </FormGroup>
       <FormGroup>
         <FormLabel>Endereço</FormLabel>
@@ -204,7 +273,9 @@ const Cart = () => {
           type="text"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
+          $hasError={!!deliveryErrors.address}
         />
+        {deliveryErrors.address && <ErrorText>{deliveryErrors.address}</ErrorText>}
       </FormGroup>
       <FormGroup>
         <FormLabel>Cidade</FormLabel>
@@ -212,7 +283,9 @@ const Cart = () => {
           type="text"
           value={city}
           onChange={(e) => setCity(e.target.value)}
+          $hasError={!!deliveryErrors.city}
         />
+        {deliveryErrors.city && <ErrorText>{deliveryErrors.city}</ErrorText>}
       </FormGroup>
       <FormRow>
         <FormGroup>
@@ -220,16 +293,21 @@ const Cart = () => {
           <FormInput
             type="text"
             value={zipCode}
-            onChange={(e) => setZipCode(e.target.value)}
+            onChange={(e) => setZipCode(maskCEP(e.target.value))}
+            placeholder="00000-000"
+            $hasError={!!deliveryErrors.zipCode}
           />
+          {deliveryErrors.zipCode && <ErrorText>{deliveryErrors.zipCode}</ErrorText>}
         </FormGroup>
         <FormGroup>
           <FormLabel>Número</FormLabel>
           <FormInput
             type="text"
             value={number}
-            onChange={(e) => setNumber(e.target.value)}
+            onChange={(e) => setNumber(maskOnlyNumbers(e.target.value))}
+            $hasError={!!deliveryErrors.number}
           />
+          {deliveryErrors.number && <ErrorText>{deliveryErrors.number}</ErrorText>}
         </FormGroup>
       </FormRow>
       <FormGroup>
@@ -241,12 +319,12 @@ const Cart = () => {
         />
       </FormGroup>
       <CheckoutButton
-        onClick={() => setStep('payment')}
+        onClick={handleGoToPayment}
         style={{ marginTop: '16px', marginBottom: '8px' }}
       >
         Continuar com o pagamento
       </CheckoutButton>
-      <CheckoutButton onClick={() => setStep('cart')}>
+      <CheckoutButton onClick={() => { setDeliveryErrors({}); setStep('cart') }}>
         Voltar para o carrinho
       </CheckoutButton>
     </>
@@ -263,7 +341,9 @@ const Cart = () => {
           type="text"
           value={cardName}
           onChange={(e) => setCardName(e.target.value)}
+          $hasError={!!paymentErrors.cardName}
         />
+        {paymentErrors.cardName && <ErrorText>{paymentErrors.cardName}</ErrorText>}
       </FormGroup>
       <FormRow>
         <FormGroup style={{ flex: 2 }}>
@@ -271,16 +351,22 @@ const Cart = () => {
           <FormInput
             type="text"
             value={cardNumber}
-            onChange={(e) => setCardNumber(e.target.value)}
+            onChange={(e) => setCardNumber(maskCardNumber(e.target.value))}
+            placeholder="0000 0000 0000 0000"
+            $hasError={!!paymentErrors.cardNumber}
           />
+          {paymentErrors.cardNumber && <ErrorText>{paymentErrors.cardNumber}</ErrorText>}
         </FormGroup>
         <FormGroup style={{ flex: 1 }}>
           <FormLabel>CVV</FormLabel>
           <FormInput
             type="text"
             value={cvv}
-            onChange={(e) => setCvv(e.target.value)}
+            onChange={(e) => setCvv(maskCVV(e.target.value))}
+            placeholder="000"
+            $hasError={!!paymentErrors.cvv}
           />
+          {paymentErrors.cvv && <ErrorText>{paymentErrors.cvv}</ErrorText>}
         </FormGroup>
       </FormRow>
       <FormRow>
@@ -289,16 +375,22 @@ const Cart = () => {
           <FormInput
             type="text"
             value={expiresMonth}
-            onChange={(e) => setExpiresMonth(e.target.value)}
+            onChange={(e) => setExpiresMonth(maskMonth(e.target.value))}
+            placeholder="01"
+            $hasError={!!paymentErrors.expiresMonth}
           />
+          {paymentErrors.expiresMonth && <ErrorText>{paymentErrors.expiresMonth}</ErrorText>}
         </FormGroup>
         <FormGroup>
           <FormLabel>Ano de vencimento</FormLabel>
           <FormInput
             type="text"
             value={expiresYear}
-            onChange={(e) => setExpiresYear(e.target.value)}
+            onChange={(e) => setExpiresYear(maskYear(e.target.value))}
+            placeholder="2026"
+            $hasError={!!paymentErrors.expiresYear}
           />
+          {paymentErrors.expiresYear && <ErrorText>{paymentErrors.expiresYear}</ErrorText>}
         </FormGroup>
       </FormRow>
       <CheckoutButton
@@ -308,7 +400,7 @@ const Cart = () => {
       >
         {isSubmitting ? 'Finalizando...' : 'Finalizar pagamento'}
       </CheckoutButton>
-      <CheckoutButton onClick={() => setStep('delivery')}>
+      <CheckoutButton onClick={() => { setPaymentErrors({}); setStep('delivery') }}>
         Voltar para a edição de endereço
       </CheckoutButton>
     </>
