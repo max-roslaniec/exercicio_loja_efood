@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
 import { Produto } from '../../types'
-import { useCart } from '../../contexts/CartContext'
+import { addItem } from '../../store/reducers/cart'
 import {
   Overlay,
   ModalContainer,
@@ -22,7 +23,7 @@ const formatarPreco = (preco: number) =>
   preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 const Modal = ({ produto, onClose }: Props) => {
-  const { addItem } = useCart()
+  const dispatch = useDispatch()
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -38,7 +39,7 @@ const Modal = ({ produto, onClose }: Props) => {
   }
 
   const handleAddToCart = () => {
-    addItem(produto)
+    dispatch(addItem(produto))
     onClose()
   }
 

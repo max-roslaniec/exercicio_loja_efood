@@ -1,5 +1,11 @@
 import React, { useState } from 'react'
-import { useCart } from '../../contexts/CartContext'
+import { useSelector, useDispatch } from 'react-redux'
+import { RootState } from '../../store'
+import {
+  removeItem,
+  clearCart,
+  closeCart
+} from '../../store/reducers/cart'
 import {
   Overlay,
   Sidebar,
@@ -52,7 +58,10 @@ const maskOnlyNumbers = (value: string) => value.replace(/\D/g, '')
 type FieldErrors = Record<string, string>
 
 const Cart = () => {
-  const { items, removeItem, clearCart, isOpen, closeCart, totalPrice } = useCart()
+  const dispatch = useDispatch()
+  const { items, isOpen } = useSelector((state: RootState) => state.cart)
+  const totalPrice = items.reduce((sum, item) => sum + item.preco, 0)
+
   const [step, setStep] = useState<CheckoutStep>('cart')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderId, setOrderId] = useState('')
@@ -77,10 +86,10 @@ const Cart = () => {
   const [paymentErrors, setPaymentErrors] = useState<FieldErrors>({})
 
   const handleClose = () => {
-    closeCart()
+    dispatch(closeCart())
     if (step === 'confirmation') {
       setStep('cart')
-      clearCart()
+      dispatch(clearCart())
       resetForms()
     }
   }
@@ -192,8 +201,8 @@ const Cart = () => {
   }
 
   const handleConcluir = () => {
-    closeCart()
-    clearCart()
+    dispatch(closeCart())
+    dispatch(clearCart())
     resetForms()
     setStep('cart')
   }
@@ -216,7 +225,7 @@ const Cart = () => {
                 <CartItemTitle>{item.nome}</CartItemTitle>
                 <CartItemPrice>{formatarPreco(item.preco)}</CartItemPrice>
               </CartItemInfo>
-              <RemoveButton onClick={() => removeItem(item.id)}>
+              <RemoveButton onClick={() => dispatch(removeItem(item.id))}>
                 <svg
                   width="16"
                   height="16"
